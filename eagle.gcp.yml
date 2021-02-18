@@ -1,5 +1,0 @@
-plugin: gcp_compute
-projects:
-  - eagle-305018
-auth_kind: serviceaccount
-service_account_file:  /Users/belloau/Documents/gcp/eagle/keys/eagle-305018-5ba801bcfce5.json
