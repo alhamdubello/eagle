@@ -1,0 +1,16 @@
+---
+# tasks file for systemtools
+- name: Ensure EPEL is installed
+  dnf:
+    name: epel-release.noarch
+    state: present
+
+- name: Ensure working tools are installed
+  dnf:
+    name: "{{ pkgs }}"
+    state: present
+
+- name: Ensure Ansible is installed
+  dnf:
+    name: ansible
+    state: present

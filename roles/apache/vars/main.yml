@@ -1,0 +1,6 @@
+---
+# vars file for apache
+srvs:
+  - 22/tcp
+  - 80/tcp
+  - 443/tcp

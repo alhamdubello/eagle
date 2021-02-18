@@ -1,0 +1,4 @@
+---
+# handlers file for apache
+- name: reload firewalld
+  command: systemctl firewalld --reload

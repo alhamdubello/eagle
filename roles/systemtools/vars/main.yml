@@ -1,0 +1,7 @@
+---
+# vars file for systemtools
+pkgs:
+  - vim
+  - bash-completion
+  - nano
+  - git

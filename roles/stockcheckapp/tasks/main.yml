@@ -1,0 +1,22 @@
+---
+# tasks file for stockcheckapp
+- debug: var=instance1
+- debug: var=instance2
+- debug: var=instance3
+- name: copying the content of instance1 stockchecker app
+  template:
+    src: templates/instance1.j2
+    dest: /var/www/html/index.html
+  when: instance1 == instance1
+
+- name: copying the content of instance2 stockchecker app
+  template:
+    src: templates/instance2.j2
+    dest: /var/www/html/index.html
+  when: instance2 == instance2
+
+- name: copying the content of instance3 stockchecker app
+  template:
+    src: templates/instance3.j2
+    dest: /var/www/html/index.html
+  when: instance3 == instance3

@@ -1,0 +1,41 @@
+---
+# tasks:
+- name: create management instances
+  include: management.yml
+
+- name: create stockcheckapp websevers
+  include: stockcheckerapp.yml
+
+- name: creating stockchecker loadbalancing
+  include: stockcheckerapp-lb.yml
+
+        #      roles:
+        #        - apache
+        #        - php-fpm
+        #        - stockcheckapp-content
+        #
+        #    - name: create loadbalancer for stockcheck application
+        #      include: lbstockcheckapp.yml
+        #
+        #    - name: create greeneaglelogistics webservers
+        #      include: greeneaglelogistics.yml
+        #      roles:
+        #        - apache
+        #        - php-fpm
+        #        - greeneagle-content
+        #
+        #    - name: create loadbalancer for greeneagle web application
+        #      include: lbgreeneagle.yml
+        #
+        #    - name: creating Redis Server
+        #      include: redis.yml
+        #      roles:
+        #        - redis
+        #
+        #    - name: creating Elasticsearch cluster
+        #      include: elasticsearch.yml
+        #      roles:
+        #        - elasticsearch
+        #
+        #    - name: create load balancer for elastic search
+        #      include: lbelasticsearch.yml

@@ -1,0 +1,42 @@
+---
+# tasks file for apache
+- name: installing apache
+  dnf:
+    name:
+      - httpd
+      - mod_ssl
+    state: present
+
+- name: starting apache services
+  systemd:
+    name: httpd
+    state: started
+    enabled: yes
+
+- name: installing firewalld
+  dnf:
+    name: firewalld
+    state: present
+
+- name: starting firewalld service
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Opening Ports 80 and 443 for Apache.
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: true
+  loop:
+    "{{ srvs }}"
+  tags: openport
+
+
+  #- name: copying content
+  #template:
+  #  src: templates/master.j2
+  #  dest: /var/www/html/index.html
+

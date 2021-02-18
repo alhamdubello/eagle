@@ -1,0 +1,279 @@
+---
+- name: Create stockchecker instances
+  hosts: localhost
+  gather_facts: False
+  vars_files:
+    - gce_vars/auth
+    - gce_vars/machines
+    - gce_vars/zone
+  tasks:
+    - name: create a disk mapped for Stockchecker App instance 1 - Centos 8
+      gcp_compute_disk:
+        name: stockcheck-disk-instance1
+        size_gb: 50
+        source_image: "{{ image }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: disk
+
+    - name: create a data disk for Stockchecker App instance 1 - Centos 8
+      gcp_compute_disk:
+        name: stockcheck-disk-data-instance1
+        size_gb: 50
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: disk_data
+
+    - name: create a disk mapped for Stockchecker App instance 2 - Centos 8
+      gcp_compute_disk:
+        name: stockcheck-disk-instance2
+        size_gb: 50
+        source_image: "{{ image }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: disk_instance2
+
+    - name: create a data disk for Stockchecker App instance 2 - Centos 8
+      gcp_compute_disk:
+        name: stockcheck-disk-data-instance2
+        size_gb: 50
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: disk_data_instance2
+
+    - name: create a disk mapped for Stockchecker App instance 3 - Centos 8
+      gcp_compute_disk:
+        name: stockcheck-disk-instance3
+        size_gb: 50
+        source_image: "{{ image }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: disk_instance3
+
+    - name: create a data disk for Stockchecker App instance 3 - Centos 8
+      gcp_compute_disk:
+        name: stockcheck-disk-data-instance3
+        size_gb: 50
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: disk_data_instance3
+
+    - name: create a VPC network
+      google.cloud.gcp_compute_network:
+        name: eagle-subnetwork
+        auto_create_subnetworks: 'true'
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        state: present
+      register: network
+
+    - name: create a firewall rules for VPC
+      google.cloud.gcp_compute_firewall:
+        name: eagle-fw-ports
+        network: "{{ network }}"
+        allowed:
+          - ip_protocol: icmp
+          - ip_protocol: tcp
+            ports:
+              - '22'
+              - '80'
+              - '443'
+        target_tags:
+          - stockcheck
+        source_ranges:
+          - '0.0.0.0/0'
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        state: present
+      register: firewall
+
+    - name: create an IPv4 public IP Address for instance 1
+      gcp_compute_address:
+        name: "{{ name_zonea }}-ip"
+        region: "{{ region }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: gcea_ip
+
+    - name: create the stockcheck app instance 1
+      gcp_compute_instance:
+        name: "{{ name_zonea }}"
+        machine_type: "{{ machine_type }}"
+        disks:
+          - index: 0
+            auto_delete: 'true'
+            boot: 'true'
+            source: "{{ disk }}"
+          - index: 1
+            auto_delete: 'true'
+            source: "{{ disk_data }}"
+            type: PERSISTENT
+        labels:
+          environment: stockcheckprod
+        network_interfaces:
+          - network: "{{ network }}"
+            access_configs:
+              - name: External NAT
+                nat_ip: "{{ gcea_ip }}"
+                type: ONE_TO_ONE_NAT
+        tags:
+          items:
+            - stockcheck
+            - httpserver
+            - httpsserver
+        metadata:
+          ssh_user: "{{ ssh_user }}"
+          ssh_key: "{{ ssh_key }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: instance1
+
+    - name: create an IPv4 public IP Address for instance 2
+      gcp_compute_address:
+        name: "{{ name_zoneb }}-ip"
+        region: "{{ region }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: gceb_ip
+
+    - name: create the stockcheck app instance 2
+      gcp_compute_instance:
+        name: "{{ name_zoneb }}"
+        machine_type: "{{ machine_type }}"
+        disks:
+          - index: 0
+            auto_delete: 'true'
+            boot: 'true'
+            source: "{{ disk_instance2 }}"
+          - index: 1
+            auto_delete: 'true'
+            source: "{{ disk_data_instance2 }}"
+            type: PERSISTENT
+        labels:
+          environment: stockcheckprod
+        network_interfaces:
+          - network: "{{ network }}"
+            access_configs:
+              - name: External NAT
+                nat_ip: "{{ gceb_ip }}"
+                type: ONE_TO_ONE_NAT
+        tags:
+          items:
+            - stockcheck
+            - httpserver
+            - httpsserver
+        metadata:
+          ssh_user: "{{ ssh_user }}"
+          ssh_key: "{{ ssh_key }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: instance2
+
+    - name: create an IPv4 public IP Address for instance 3
+      gcp_compute_address:
+        name: "{{ name_zonec }}-ip"
+        region: "{{ region }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: gcec_ip
+
+
+    - name: create the stockcheck app instance 3
+      gcp_compute_instance:
+        name: "{{ name_zonec }}"
+        machine_type: "{{ machine_type }}"
+        disks:
+          - index: 0
+            auto_delete: 'true'
+            boot: 'true'
+            source: "{{ disk_instance3 }}"
+          - index: 1
+            auto_delete: 'true'
+            source: "{{ disk_data_instance3 }}"
+            type: PERSISTENT
+        labels:
+          environment: stockcheckprod
+        network_interfaces:
+          - network: "{{ network }}"
+            access_configs:
+              - name: External NAT
+                nat_ip: "{{ gcec_ip }}"
+                type: ONE_TO_ONE_NAT
+        tags:
+          items:
+            - stockcheck
+            - httpserver
+            - httpsserver
+        metadata:
+          ssh_user: "{{ ssh_user }}"
+          ssh_key: "{{ ssh_key }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        state: present
+      register: instance3
+
+    - name: Add instance1 to group stockcheckerapp
+      add_host:
+        name: "{{ gcea_ip.address }}"
+        groups: stockcheckerapp
+
+    - name: Add instance2 to group stockcheckerapp
+      add_host:
+        name: "{{ gceb_ip.address }}"
+        groups: stockcheckerapp
+
+    - name: Add instance3 to group stockcheckerapp
+      add_host:
+        name: "{{ gcec_ip.address }}"
+        groups: stockcheckerapp
+
+  post_tasks:
+    - name: Wait for SSH for instances in first zone
+      wait_for: delay=10 host={{ gcea_ip.address }} port=22 state=started timeout=30
+
+    - name: Save host data for first zone
+      add_host: hostname={{ gcea_ip.address }} groupname=gce_instances_ips
+
+    - name: Wait for SSH for instances in second zone
+      wait_for: delay=10 host={{ gceb_ip.address }} port=22 state=started timeout=30
+
+    - name: Save host data for second zone
+      add_host: hostname={{ gceb_ip.address }} groupname=gce_instances_ips
+
+    - name: Wait for SSH for instances in third zone
+      wait_for: delay=10 host={{ gcec_ip.address }} port=22 state=started timeout=30
+
+    - name: Save host data for third zone
+      add_host: hostname={{ gcec_ip.address }} groupname=gce_instances_ips
+
+- hosts: stockcheckerapp
+  roles:
+    - apache
+      #- stockcheckapp
+  gather_facts: False
+  become: true
+  vars:
+    ansible_user: belloau
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa.pub

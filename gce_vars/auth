@@ -1,0 +1,6 @@
+---
+gcp_project: eagle-305018
+gcp_cred_kind: serviceaccount
+gcp_cred_file: /Users/belloau/Documents/gcp/eagle/keys/eagle-305018-5ba801bcfce5.json
+ssh_user: alhamdubello
+ssh_key: ~/.ssh/id_rsa.pub
