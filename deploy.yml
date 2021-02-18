@@ -9,28 +9,14 @@
 - name: creating stockchecker loadbalancing
   include: stockcheckerapp-lb.yml
 
-        #      roles:
-        #        - apache
-        #        - php-fpm
-        #        - stockcheckapp-content
-        #
-        #    - name: create loadbalancer for stockcheck application
-        #      include: lbstockcheckapp.yml
-        #
-        #    - name: create greeneaglelogistics webservers
-        #      include: greeneaglelogistics.yml
-        #      roles:
-        #        - apache
-        #        - php-fpm
-        #        - greeneagle-content
-        #
-        #    - name: create loadbalancer for greeneagle web application
-        #      include: lbgreeneagle.yml
-        #
-        #    - name: creating Redis Server
-        #      include: redis.yml
-        #      roles:
-        #        - redis
+- name: create greeneaglelogistics webservers
+  include: greeneaglelogistics.yml
+
+- name: create loadbalancer for greeneagle web application
+  include: greeneaglelogistics-lb.yml
+
+- name: creating Redis Server
+  include: redis.yml
         #
         #    - name: creating Elasticsearch cluster
         #      include: elasticsearch.yml
