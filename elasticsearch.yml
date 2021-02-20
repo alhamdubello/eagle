@@ -1,0 +1,214 @@
+---
+- name: Create elastics0er instances
+  hosts: localhost
+  gather_facts: False
+  vars_files:
+    - gce_vars/auth
+    - gce_vars/machines
+    - gce_vars/zone
+  tasks:
+    - name: create a disk mapped for elasticsearch App instance 1 - Centos 8
+      gcp_compute_disk:
+        name: elastics01-disk-instance1
+        size_gb: 50
+        type: pd-ssd
+        source_image: "{{ image }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        state: present
+      register: elastics01_disk_instance1
+
+    - name: create a disk mapped for elasticsearch02 App instance 2 - Centos 8
+      gcp_compute_disk:
+        name: elastics02-disk-instance2
+        size_gb: 50
+        type: pd-ssd
+        source_image: "{{ image }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        state: present
+      register: elastics02_disk_instance2
+
+    - name: create a disk mapped for elasticsearch03 App instance 3 - Centos 8
+      gcp_compute_disk:
+        name: elastics03-disk-instance3
+        size_gb: 50
+        type: pd-ssd
+        source_image: "{{ image }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        state: present
+      register: elastics03_disk_instance3
+
+    - name: create a VPC stockcheck network
+      gcp_compute_network:
+        name: stockchecker-subnetwork
+        auto_create_subnetworks: 'true'
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        state: present
+      register: network
+
+
+    - name: create a firewall rules for elasticseacrh app
+      gcp_compute_firewall:
+        name: elastics-fw-ports
+        network: "{{ network }}"
+        allowed:
+          - ip_protocol: icmp
+          - ip_protocol: tcp
+            ports:
+              - '22'
+              - '80'
+              - '443'
+              - '9200-9400'
+        target_tags:
+          - elasticsearch
+        source_tags:
+          - management
+          - greeneagle
+          - redis
+          - stockcheck
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        state: present
+      register: firewall
+
+    - name: create the elastics01 app instance 1
+      gcp_compute_instance:
+        name: "{{ es_zonea }}"
+        machine_type: "{{ machine_type.elastics }}"
+        disks:
+          - index: 0
+            auto_delete: 'no'
+            boot: 'true'
+            source: "{{ elastics01_disk_instance1 }}"
+        labels:
+          environment: elasticsprod
+        network_interfaces:
+          - network: "{{ network }}"
+        tags:
+          items:
+            - elasticsearch
+        metadata:
+          ssh_user: "{{ ssh_user }}"
+          ssh_key: "{{ ssh_key }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        state: present
+      register: elastics01
+
+    - name: create the elastics02 instance 2
+      gcp_compute_instance:
+        name: "{{ es_zoneb }}"
+        machine_type: "{{ machine_type.elastics }}"
+        disks:
+          - index: 0
+            auto_delete: 'no'
+            boot: 'true'
+            source: "{{ elastics02_disk_instance2 }}"
+        network_interfaces:
+          - network: "{{ network }}"
+        tags:
+          items:
+            - elasticsearch
+        metadata:
+          ssh_user: "{{ ssh_user }}"
+          ssh_key: "{{ ssh_key }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        state: present
+      register: elastics02
+
+    - name: create the elastics03 instance 3
+      gcp_compute_instance:
+        name: "{{ es_zonec }}"
+        machine_type: "{{ machine_type.elastics }}"
+        disks:
+          - index: 0
+            auto_delete: 'no'
+            boot: 'true'
+            source: "{{ elastics03_disk_instance3 }}"
+        network_interfaces:
+          - network: "{{ network }}"
+        tags:
+          items:
+            - elasticsearch
+        metadata:
+          ssh_user: "{{ ssh_user }}"
+          ssh_key: "{{ ssh_key }}"
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        state: present
+      register: elastics03
+
+    - debug: var=elastics01
+    - debug: var=elastics02
+    - debug: var=elastics03
+    - debug: var=elastics01.networkInterfaces[0].networkIP
+    - debug: var=elastics02.networkInterfaces[0].networkIP
+    - debug: var=elastics03.networkInterfaces[0].networkIP
+
+    - name: Add elastics01 to group elastics
+      add_host:
+        name: "{{ elastics01.networkInterfaces[0].networkIP }}"
+        groups: elastics
+
+    - name: Add elastics02 to group elastics
+      add_host:
+        name: "{{ elastics02.networkInterfaces[0].networkIP }}"
+        groups: elastics
+    
+    - name: Add elastics03 to group elastics
+      add_host:
+        name: "{{ elastics03.networkInterfaces[0].networkIP }}"
+        groups: elastics
+
+  post_tasks:
+    - name: Wait for SSH for elastics01
+      wait_for:
+        delay: 30
+        host: "{{ elastics01.networkInterfaces[0].networkIP }}"
+        port: 22
+        state: started
+        timeout: 120
+
+    - name: Wait for SSH for elastics02
+      wait_for:
+        delay: 30
+        host: "{{ elastics02.networkInterfaces[0].networkIP }}"
+        port: 22
+        state: started
+        timeout: 120
+
+    - name: Wait for SSH for elastics03
+      wait_for:
+        delay: 30
+        host: "{{ elastics03.networkInterfaces[0].networkIP }}"
+        port: 22
+        state: started
+        timeout: 120
+
+- hosts: elastics
+  roles:
+    - apache
+    - elasticsinstall
+  gather_facts: true
+  become: true
+  vars:
+    ansible_user: belloau
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa.pub

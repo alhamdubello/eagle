@@ -4,4 +4,5 @@ machine_type:
   stockcheck: n1-standard-1
   redis: n1-standard-1
   greeneagle: n1-standard-1
+  elastics: n1-standard-1
 image: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-8-v20210122

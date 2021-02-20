@@ -1,0 +1,6 @@
+---
+# handlers file for elasticsinstall
+- name: restart elasticsearch
+  systemd:
+    name: elasticsearch
+    state: restarted

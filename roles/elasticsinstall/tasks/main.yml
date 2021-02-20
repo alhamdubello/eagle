@@ -1,0 +1,52 @@
+---
+# tasks file for elasticsinstall
+- name: installing Java JDK 1.8.0-openjdk-devel
+  dnf:
+    name: java-1.8.0-openjdk-devel
+    state: present
+
+- name: Import a key from Elastics
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://packages.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Installing Elastics Repo
+  template:
+    src: templates/elastic.repo.j2
+    dest: /etc/yum.repos.d/elastic.repo
+
+- name: Installing Elasticsearch
+  dnf:
+    name: elasticsearch
+    state: present
+
+- name: Starting elasticsearch
+  systemd:
+    name: elasticsearch
+    state: started
+    enabled: yes
+
+- name: Installing filebeat
+  dnf:
+    name: filebeat
+    state: present
+
+- name: Starting filebeat service
+  systemd:
+    name: filebeat
+    state: started
+    enabled: yes
+
+- name: Opening Ports 9200 - 9400 for Elasticsearch.
+  firewalld:
+    port: 9200-9400/tcp
+    permanent: yes
+    state: enabled
+    immediate: true
+
+- name: performing cluster configuration
+  template:
+    src: templates/elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+  notify: restart elasticsearch

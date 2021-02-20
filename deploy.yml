@@ -17,9 +17,6 @@
 
 - name: create loadbalancer for greeneagle web application
   include: greeneaglelogistics-lb.yml
-  #        #
-  #        #    - name: creating Elasticsearch cluster
-        #      include: elasticsearch.yml
-        #      roles:
-        #        - elasticsearch
-        #
+
+- name: creating Elasticsearch cluster
+  include: elasticsearch.yml
