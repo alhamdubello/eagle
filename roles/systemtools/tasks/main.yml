@@ -14,3 +14,45 @@
   dnf:
     name: ansible
     state: present
+
+    #- name: Install pip3 pakacages
+    #  pip:
+    #    name:
+    #      - yamllint
+    #      - requests
+    #      - molecule
+    #      - google-auth
+    #      - ansible-lint
+    #
+- name: Ensure these Admin groups are present.
+  group:
+    name: "{{ item.name }}"
+    gid: "{{ item.gid }}"
+    state: present
+  with_items:
+    - "{{ groups_var }}"
+
+- name: Ensure the list of users are present
+  user:
+    name: "{{ item.name }}"
+    groups: "{{ item.group }}"
+    state: present
+    append: yes
+  with_items:
+    - "{{ users_var }}"
+
+      #- name: make sure system management user ssh keys is in authorizes_keys
+      #  ansible.posix.authorized_key:
+      #    user: deploy
+      #    state: present
+      #    key: '{{ item }}'
+      #  with_file:
+      #    - public_keys/doe-jane
+      #    - public_keys/doe-john
+      #
+      #
+      #- name: sudo without password for wheel group
+      #  copy:
+      #    content: '%wheel ALL=(ALL:ALL) NOPASSWD:ALL'
+      #    dest: /etc/sudoers.d/wheel_nopasswd
+      #    mode: 0440

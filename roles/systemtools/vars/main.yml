@@ -5,3 +5,33 @@ pkgs:
   - bash-completion
   - nano
   - git
+  - wget
+  - lsof
+  - htop
+  - nc
+  - bind-utils
+  - fail2ban
+  - sendmail
+  - postfix
+  - monit
+  - iotop
+
+groups_var:
+  - name: sysadmin
+    gid: 800
+  - name: webadmin
+    gid: 801
+  - name: dbadmin
+    gid: 802
+
+users_var:
+  - name: belloau
+    group:
+      - sysadmin
+      - webadmin
+      - dbadmin
+  - name: chudi01
+    group:
+      - sysadmin
+      - webadmin
+      - dbadmin

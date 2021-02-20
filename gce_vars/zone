@@ -1,10 +1,16 @@
 ---
-#Variables for europe-west2-a
-name_zonea: instance1
-name_zoneb: instance2
-name_zonec: instance3
+#Variables for us-central1
 zone:
- za: europe-west2-a
- zb: europe-west2-b
- zc: europe-west2-c
-region: europe-west2
+ za: us-central1-a
+ zb: us-central1-b
+ zc: us-central1-c
+
+region: us-central1
+
+name_zonea: stockcheck01
+name_zoneb: stockcheck02
+name_zonec: stockcheck03
+
+ge_zonea: greeneagle01
+ge_zoneb: greeneagle02
+ge_zonec: greeneagle03

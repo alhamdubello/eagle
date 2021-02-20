@@ -11,68 +11,31 @@
       gcp_compute_disk:
         name: greeneagle-disk-instance1
         size_gb: 50
+        type: pd-ssd
         source_image: "{{ image }}"
         zone: "{{ zone.za }}"
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
         state: present
-      register: disk
-
-    - name: create a data disk for Greeneagle App instance 1 - Centos 8
-      gcp_compute_disk:
-        name: greeneagle-disk-data-instance1
-        size_gb: 50
-        zone: "{{ zone.za }}"
-        project: "{{ gcp_project }}"
-        auth_kind: "{{ gcp_cred_kind }}"
-        state: present
-      register: disk_data
+      register: ge_disk_instance1
 
     - name: create a disk mapped for Greeneagle App instance 2 - Centos 8
       gcp_compute_disk:
         name: greeneagle-disk-instance2
         size_gb: 50
+        type: pd-ssd
         source_image: "{{ image }}"
         zone: "{{ zone.za }}"
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
         state: present
-      register: disk_instance2
-
-    - name: create a data disk for Greeneagle App instance 2 - Centos 8
-      gcp_compute_disk:
-        name: greeneagle-disk-data-instance2
-        size_gb: 50
-        zone: "{{ zone.za }}"
-        project: "{{ gcp_project }}"
-        auth_kind: "{{ gcp_cred_kind }}"
-        state: present
-      register: disk_data_instance2
-
-    - name: create a disk mapped for Greeneagle App instance 3 - Centos 8
-      gcp_compute_disk:
-        name: greeneagle-disk-instance3
-        size_gb: 50
-        source_image: "{{ image }}"
-        zone: "{{ zone.za }}"
-        project: "{{ gcp_project }}"
-        auth_kind: "{{ gcp_cred_kind }}"
-        state: present
-      register: disk_instance3
-
-    - name: create a data disk for Greeneagle App instance 3 - Centos 8
-      gcp_compute_disk:
-        name: greeneagle-disk-data-instance3
-        size_gb: 50
-        zone: "{{ zone.za }}"
-        project: "{{ gcp_project }}"
-        auth_kind: "{{ gcp_cred_kind }}"
-        state: present
-      register: disk_data_instance3
-
-    - name: create a VPC network
-      google.cloud.gcp_compute_network:
-        name: eagle-subnetwork
+      register: ge_disk_instance2
+    
+    - name: create a VPC stockcheck network
+      gcp_compute_network:
+        name: stockchecker-subnetwork
         auto_create_subnetworks: 'true'
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
@@ -80,9 +43,10 @@
         state: present
       register: network
 
-    - name: create a firewall rules for VPC
-      google.cloud.gcp_compute_firewall:
-        name: eagle-fw-ports
+
+    - name: create a firewall rules for greeneagle app
+      gcp_compute_firewall:
+        name: greeneagleapp-fw-ports
         network: "{{ network }}"
         allowed:
           - ip_protocol: icmp
@@ -93,185 +57,102 @@
               - '443'
         target_tags:
           - greeneagle
-        source_ranges:
-          - '0.0.0.0/0'
+        source_tags:
+          - management
+          - stockcheck
+          - redis
+          - elasticsearch
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
         service_account_file: "{{ gcp_cred_file }}"
         state: present
-      register: firewall
-
-    - name: create an IPv4 public IP Address for instance 1
-      gcp_compute_address:
-        name: "{{ name_zonea }}-ip"
-        region: "{{ region }}"
-        project: "{{ gcp_project }}"
-        auth_kind: "{{ gcp_cred_kind }}"
-        state: present
-      register: gcea_ip
+      register: gefirewall
 
     - name: create the greeneagle app instance 1
       gcp_compute_instance:
-        name: "{{ name_zonea }}"
-        machine_type: "{{ machine_type }}"
+        name: "{{ ge_zonea }}"
+        machine_type: "{{ machine_type.greeneagle }}"
         disks:
           - index: 0
-            auto_delete: 'true'
+            auto_delete: 'no'
             boot: 'true'
-            source: "{{ disk }}"
-          - index: 1
-            auto_delete: 'true'
-            source: "{{ disk_data }}"
-            type: PERSISTENT
+            source: "{{ ge_disk_instance1 }}"
         labels:
           environment: greeneagleprod
         network_interfaces:
           - network: "{{ network }}"
-            access_configs:
-              - name: External NAT
-                nat_ip: "{{ gcea_ip }}"
-                type: ONE_TO_ONE_NAT
         tags:
           items:
             - greeneagle
-            - httpserver
-            - httpsserver
         metadata:
           ssh_user: "{{ ssh_user }}"
           ssh_key: "{{ ssh_key }}"
         zone: "{{ zone.za }}"
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
         state: present
-      register: instance1
-
-    - name: create an IPv4 public IP Address for instance 2
-      gcp_compute_address:
-        name: "{{ name_zoneb }}-ip"
-        region: "{{ region }}"
-        project: "{{ gcp_project }}"
-        auth_kind: "{{ gcp_cred_kind }}"
-        state: present
-      register: gceb_ip
+      register: greeneagleappinstance1
 
     - name: create the greeneagle app instance 2
       gcp_compute_instance:
-        name: "{{ name_zoneb }}"
-        machine_type: "{{ machine_type }}"
+        name: "{{ ge_zoneb }}"
+        machine_type: "{{ machine_type.greeneagle }}"
         disks:
           - index: 0
-            auto_delete: 'true'
+            auto_delete: 'no'
             boot: 'true'
-            source: "{{ disk_instance2 }}"
-          - index: 1
-            auto_delete: 'true'
-            source: "{{ disk_data_instance2 }}"
-            type: PERSISTENT
-        labels:
-          environment: greeneagleprod
+            source: "{{ ge_disk_instance2 }}"
         network_interfaces:
           - network: "{{ network }}"
-            access_configs:
-              - name: External NAT
-                nat_ip: "{{ gceb_ip }}"
-                type: ONE_TO_ONE_NAT
         tags:
           items:
             - greeneagle
-            - httpserver
-            - httpsserver
         metadata:
           ssh_user: "{{ ssh_user }}"
           ssh_key: "{{ ssh_key }}"
         zone: "{{ zone.za }}"
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
         state: present
-      register: instance2
-
-    - name: create an IPv4 public IP Address for instance 3
-      gcp_compute_address:
-        name: "{{ name_zonec }}-ip"
-        region: "{{ region }}"
-        project: "{{ gcp_project }}"
-        auth_kind: "{{ gcp_cred_kind }}"
-        state: present
-      register: gcec_ip
+      register: greeneagleappinstance2
 
 
-    - name: create the greeneagle app instance 3
-      gcp_compute_instance:
-        name: "{{ name_zonec }}"
-        machine_type: "{{ machine_type }}"
-        disks:
-          - index: 0
-            auto_delete: 'true'
-            boot: 'true'
-            source: "{{ disk_instance3 }}"
-          - index: 1
-            auto_delete: 'true'
-            source: "{{ disk_data_instance3 }}"
-            type: PERSISTENT
-        labels:
-          environment: greeneagleprod
-        network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: External NAT
-                nat_ip: "{{ gcec_ip }}"
-                type: ONE_TO_ONE_NAT
-        tags:
-          items:
-            - greeneagle
-            - httpserver
-            - httpsserver
-        metadata:
-          ssh_user: "{{ ssh_user }}"
-          ssh_key: "{{ ssh_key }}"
-        zone: "{{ zone.za }}"
-        project: "{{ gcp_project }}"
-        auth_kind: "{{ gcp_cred_kind }}"
-        state: present
-      register: instance3
+    - debug: var=greeneagleappinstance1.networkInterfaces[0].networkIP
+    - debug: var=greeneagleappinstance2.networkInterfaces[0].networkIP
 
     - name: Add instance1 to group greeneagleerapp
       add_host:
-        name: "{{ gcea_ip.address }}"
+        name: "{{ greeneagleappinstance1.networkInterfaces[0].networkIP }}"
         groups: greeneagleerapp
 
     - name: Add instance2 to group greeneagleerapp
       add_host:
-        name: "{{ gceb_ip.address }}"
-        groups: greeneagleerapp
-
-    - name: Add instance3 to group greeneagleerapp
-      add_host:
-        name: "{{ gcec_ip.address }}"
+        name: "{{ greeneagleappinstance2.networkInterfaces[0].networkIP }}"
         groups: greeneagleerapp
 
   post_tasks:
-    - name: Wait for SSH for instances in first zone
-      wait_for: delay=10 host={{ gcea_ip.address }} port=22 state=started timeout=30
+    - name: Wait for SSH for instance1
+      wait_for:
+        delay: 30
+        host: "{{ greeneagleappinstance1.networkInterfaces[0].networkIP }}"
+        port: 22
+        state: started
+        timeout: 120
 
-    - name: Save host data for first zone
-      add_host: hostname={{ gcea_ip.address }} groupname=gce_instances_ips
-
-    - name: Wait for SSH for instances in second zone
-      wait_for: delay=10 host={{ gceb_ip.address }} port=22 state=started timeout=30
-
-    - name: Save host data for second zone
-      add_host: hostname={{ gceb_ip.address }} groupname=gce_instances_ips
-
-    - name: Wait for SSH for instances in third zone
-      wait_for: delay=10 host={{ gcec_ip.address }} port=22 state=started timeout=30
-
-    - name: Save host data for third zone
-      add_host: hostname={{ gcec_ip.address }} groupname=gce_instances_ips
+    - name: Wait for SSH for instance2
+      wait_for:
+        delay: 30
+        host: "{{ greeneagleappinstance2.networkInterfaces[0].networkIP }}"
+        port: 22
+        state: started
+        timeout: 120
 
 - hosts: greeneagleerapp
   roles:
     - apache
-      #- greeneagleapp
+   #- greeneagleapp
   gather_facts: False
   become: true
   vars:

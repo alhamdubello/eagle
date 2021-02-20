@@ -1,6 +1,6 @@
 ---
-gcp_project: eagle-305018
+gcp_project: stockcheck-database-production
 gcp_cred_kind: serviceaccount
-gcp_cred_file: /Users/belloau/Documents/gcp/eagle/keys/eagle-305018-5ba801bcfce5.json
-ssh_user: alhamdubello
+gcp_cred_file: /home/belloau/keys/stockcheck-database-production-571fe5f750ad.json
+ssh_user: belloau
 ssh_key: ~/.ssh/id_rsa.pub

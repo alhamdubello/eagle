@@ -11,84 +11,61 @@
       gcp_compute_disk:
         name: redis1-disk-instance
         size_gb: 50
+        type: pd-ssd
         source_image: "{{ image }}"
         zone: "{{ zone.za }}"
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
         state: present
       register: disk
 
-    - name: create a data disk for Redis Node - Centos 8
-      gcp_compute_disk:
-        name: redis1-disk-data
-        size_gb: 50
-        zone: "{{ zone.za }}"
-        project: "{{ gcp_project }}"
-        auth_kind: "{{ gcp_cred_kind }}"
-        state: present
-      register: disk_data
-
-    - name: create a VPC network
-      google.cloud.gcp_compute_network:
-        name: eagle-subnetwork
+    - name: create a VPC stockcheck network
+      gcp_compute_network:
+        name: stockchecker-subnetwork
         auto_create_subnetworks: 'true'
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
         service_account_file: "{{ gcp_cred_file }}"
         state: present
       register: network
-
-    - name: create a firewall rules for VPC
-      google.cloud.gcp_compute_firewall:
-        name: eagle-fw-ports
+    
+    - name: create a firewall rules for redis app
+      gcp_compute_firewall:
+        name: redis-fw-ports
         network: "{{ network }}"
         allowed:
           - ip_protocol: icmp
           - ip_protocol: tcp
             ports:
               - '22'
-              - '80'
-              - '443'
+              - '6379'
         target_tags:
+          - redis
+        source_tags:
           - management
-        source_ranges:
-          - '0.0.0.0/0'
+          - greeneagle
+          - stockcheck
+          - elasticsearch
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
         service_account_file: "{{ gcp_cred_file }}"
         state: present
       register: firewall
 
-    - name: create an IPv4 public IP Address
-      gcp_compute_address:
-        name: redis-instance1-ip
-        region: "{{ region }}"
-        project: "{{ gcp_project }}"
-        auth_kind: "{{ gcp_cred_kind }}"
-        state: present
-      register: address
-
     - name: create the Redis instance
       gcp_compute_instance:
         name: redis1-instance1
-        machine_type: "{{ machine_type }}"
+        machine_type: "{{ machine_type.redis }}"
         disks:
           - index: 0
-            auto_delete: 'true'
+            auto_delete: 'no'
             boot: 'true'
             source: "{{ disk }}"
-          - index: 1
-            auto_delete: 'true'
-            source: "{{ disk_data }}"
-            type: PERSISTENT
         labels:
           environment: production
         network_interfaces:
           - network: "{{ network }}"
-            access_configs:
-              - name: External NAT
-                nat_ip: "{{ address }}"
-                type: ONE_TO_ONE_NAT
         tags:
           items:
             - management
@@ -98,21 +75,27 @@
         zone: "{{ zone.za }}"
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
         state: present
-      register: instance
+      register: redisinstance1
 
     - name: Show Redis Instance Details
       debug:
-        msg: "The Redis instance is accessible at {{ address.address }}"
+        msg: "The Redis instance is accessible at {{ redisinstance1.networkInterfaces[0].networkIP }}"
 
     - name: Add redis1 to group redis1
       add_host:
-        name: "{{ address.address }}"
+        name: "{{ redisinstance1.networkInterfaces[0].networkIP }}"
         groups: redis
 
   post_tasks:
-    - name: Wait for SSH for instances in first zone
-      wait_for: delay=10 host={{ address.address }} port=22 state=started timeout=30
+    - name: Wait for SSH for instance1
+      wait_for:
+        delay: 30
+        host: "{{ redisinstance1.networkInterfaces[0].networkIP }}"
+        port: 22
+        state: started
+        timeout: 120
 
 - hosts: redis
   gather_facts: False
