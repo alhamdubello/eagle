@@ -1,5 +1,11 @@
 ---
 # tasks file for apache
+- name: installing tools to manage webservers
+  dnf:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ tools }}"
+
 - name: installing apache
   dnf:
     name:
