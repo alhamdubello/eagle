@@ -39,4 +39,9 @@ users_var:
     group:
       - sysadmin
       - webadmin
+  - name: chukwudi
+    group:
+      - sysadmin
+      - webadmin
+      - dbadmin
 

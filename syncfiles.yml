@@ -108,6 +108,11 @@
       authorized_key:
         user: mndoma 
         key: "{{ lookup('file', '/data/keys/id_mndoma.pub') }}"
+    
+    - name: copying keys for chukwudi
+      authorized_key:
+        user: chukwudi
+        key: "{{ lookup('file', '/data/keys/id_chukwudi.pub') }}"
         state: present
 
     - name: adding sudoers for webadmin
