@@ -1,0 +1,121 @@
+---
+- name: Getting master info instances
+  hosts: localhost
+  gather_facts: False
+  vars_files:
+    - gce_vars/auth
+    - gce_vars/machines
+    - gce_vars/zone
+  tasks:
+    - name: get info on master instance
+      gcp_compute_instance_info:
+        filters:
+        - name = master
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+      register: master
+      #- debug: var=master.resources[0].networkInterfaces[0].networkIP
+
+    - name: Adding Master instance to group master
+      add_host:
+        name: "{{ master.resources[0].networkInterfaces[0].networkIP }}"
+        groups: master
+    
+    - name: get info on stockcheck instance1
+      gcp_compute_instance_info:
+        filters:
+        - name = stockcheck01 
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+      register: stockcheck01
+    - debug: var=stockcheck01.resources[0].networkInterfaces[0].networkIP
+
+    - name: get info on stockcheck instance2
+      gcp_compute_instance_info:
+        filters:
+        - name = stockcheck02 
+        zone: "{{ zone.za }}"
+        project: "{{ gcp_project }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+        service_account_file: "{{ gcp_cred_file }}"
+      register: stockcheck02
+    - debug: var=stockcheck02.resources[0].networkInterfaces[0].networkIP
+
+    - name: Adding stokcheck01 instance to group stockcheck
+      add_host:
+        name: "{{ stockcheck01.resources[0].networkInterfaces[0].networkIP }}"
+        groups: stockcheck
+    
+    - name: Adding stockcheck02 instance to group stockcheck
+      add_host:
+        name: "{{ stockcheck02.resources[0].networkInterfaces[0].networkIP }}"
+        groups: stockcheck
+
+- hosts: master
+  gather_facts: true
+  become: true
+  roles:
+    - systemtools
+  vars:
+    ansible_user: belloau
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa.pub
+  tasks:
+    - name: Installing lysncd 
+      dnf:
+        name: lsyncd
+        state: present
+    
+    - name: Starting lsyncd services
+      systemd:
+        name: lsyncd
+        state: started
+        enabled: yes
+
+    - name: run the lsyncd configs
+      template:
+        src: templates/lsyncd.conf.j2
+        dest: /etc/lsyncd.conf
+      notify: restart lsyncd
+        
+  handlers:
+    - name: restart lsyncd
+      systemd:
+        name: lsyncd
+        state: restarted
+
+
+- hosts: stockcheck
+  gather_facts: true
+  become: true
+  vars:
+    ansible_user: belloau
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa.pub
+  roles:
+    - systemtools
+  tasks:
+    - name: Install apache on hosts
+      dnf:
+        name:
+          - httpd
+          - rsync
+        state: present
+
+    - name: copying keys for manyondoma
+      authorized_key:
+        user: mndoma 
+        key: "{{ lookup('file', '/data/keys/id_mndoma.pub') }}"
+        state: present
+
+    - name: adding sudoers for webadmin
+      template:
+        src: templates/webadmin_sudoers.j2
+        dest: /etc/sudoers.d/webadmin_sudoers
+
+    - name: adding sudoers for webadmin
+      template:
+        src: templates/sysadmin_sudoers.j2
+        dest: /etc/sudoers.d/sysadmin_sudoers

@@ -35,3 +35,8 @@ users_var:
       - sysadmin
       - webadmin
       - dbadmin
+  - name: mndoma
+    group:
+      - sysadmin
+      - webadmin
+

@@ -1,0 +1,38 @@
+----
+-- User configuration file for lsyncd.
+settings {
+logfile = "/var/log/lsyncd/lsyncd.log",
+statusFile = "/var/log/lsyncd/lsyncd-status.log",
+statusInterval = 5
+}
+--
+-- Simple example for default rsync, but executing moves through on the target.
+--
+-- For more examples, see /usr/share/doc/lsyncd*/examples/
+--
+sync{default.rsyncssh, source="/var/www/html", host="localhost", targetdir="/tmp/htmlcopy/"}
+--
+sync{default.rsyncssh, source="/data/prod/sc/", host="10.128.0.22", targetdir="/var/www/html/", 
+rsync = {
+        binary = "/usr/bin/rsync",
+        rsh = "/usr/bin/ssh -l root -o StrictHostKeyChecking=no",
+        compress = true,
+        acls = true,
+        verbose = true,
+        owner = true,
+        group = true,
+        perms = true,
+    }
+}
+sync{default.rsyncssh, source="/data/prod/sc/", host="10.128.0.23", targetdir="/var/www/html/", 
+rsync = {
+        binary = "/usr/bin/rsync",
+        rsh = "/usr/bin/ssh -l root -o StrictHostKeyChecking=no",
+        compress = true,
+        acls = true,
+        verbose = true,
+        owner = true,
+        group = true,
+        perms = true,
+    }
+}
