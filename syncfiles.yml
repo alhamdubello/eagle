@@ -119,3 +119,52 @@
       template:
         src: templates/sysadmin_sudoers.j2
         dest: /etc/sudoers.d/sysadmin_sudoers
+
+    - name: ensuring webroot directory
+      file:
+        path: /var/www/html/frontend/web
+        state: directory
+        mode: '0755'
+
+    - name: update apache configs
+      template:
+        src: templates/httpd.conf.j2
+        dest: /etc/httpd/conf/httpd.conf
+      notify: restart apache
+        
+    - name: Install PHPFM repos
+      dnf:
+        name: "http://rpms.remirepo.net/enterprise/remi-release-8.rpm"
+        disable_gpg_check: True
+        state: present
+
+    - name: Enable the PHPFM repos
+      dnf:
+        name: "@php:remi-7.4"
+        state: present
+
+    - name: Installing PHP packages
+      dnf:
+        name:
+          - php
+          - php-fpm
+          - php-gd
+          - php-mysqlnd
+        state: present
+
+    - name: Starting the Php-fpm service
+      systemd:
+        name: php-fpm
+        state: started
+        enabled: yes
+
+    - name: sample php files
+      template:
+        src: templates/index.php.j2
+        dest: /var/www/html/frontend/web/index.php
+
+  handlers:
+    - name: restart apache
+      systemd:
+        name: httpd
+        state: restarted
