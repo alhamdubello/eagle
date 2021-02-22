@@ -1,25 +1,25 @@
 ---
-# tasks:
 #- name: create management instances
 #  include: management.yml
 
 - name: create stockcheckapp websevers
-  include: stockcheckerapp.yml
-#
+  import_playbook: stockcheckerapp.yml
+
 - name: creating stockchecker loadbalancing
-  include: stockcheckerapp-lb.yml
-#
-#- name: setting up redis
-#  include: redis.yml
-#
-#- name: create greeneaglelogistics webservers
-#  include: greeneaglelogistics.yml
-#
-#- name: create loadbalancer for greeneagle web application
-#  include: greeneaglelogistics-lb.yml
-#
-#- name: creating Elasticsearch cluster
-#  include: elasticsearch.yml
+  import_playbook: stockcheckerapp-lb.yml
+
+- name: setting up redis
+  import_playbook: redis.yml
+
+- name: create greeneaglelogistics webservers
+  import_playbook: greeneaglelogistics.yml
+
+- name: create loadbalancer for greeneagle web application
+  import_playbook: greeneaglelogistics-lb.yml
+
+- name: creating Elasticsearch cluster
+  import_playbook: elasticsearch.yml
+
 - name: shoplauncher nodes
   import_playbook: shoplauncher.yml
 

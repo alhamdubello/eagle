@@ -21,7 +21,7 @@
         instances:
           - "{{ shoplauncherappinstance1 }}"
           - "{{ shoplauncherappinstance2 }}"
-          - "{{ shoplauncherappinstance2 }}"
+          - "{{ shoplauncherappinstance3 }}"
         named_ports:
           - name: http
             port: 80
