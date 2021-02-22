@@ -5,18 +5,23 @@
 
 - name: create stockcheckapp websevers
   include: stockcheckerapp.yml
-
+#
 - name: creating stockchecker loadbalancing
   include: stockcheckerapp-lb.yml
+#
+#- name: setting up redis
+#  include: redis.yml
+#
+#- name: create greeneaglelogistics webservers
+#  include: greeneaglelogistics.yml
+#
+#- name: create loadbalancer for greeneagle web application
+#  include: greeneaglelogistics-lb.yml
+#
+#- name: creating Elasticsearch cluster
+#  include: elasticsearch.yml
+- name: shoplauncher nodes
+  import_playbook: shoplauncher.yml
 
-- name: setting up redis
-  include: redis.yml
-
-- name: create greeneaglelogistics webservers
-  include: greeneaglelogistics.yml
-
-- name: create loadbalancer for greeneagle web application
-  include: greeneaglelogistics-lb.yml
-
-- name: creating Elasticsearch cluster
-  include: elasticsearch.yml
+- name: shoplauncher loadbalancers
+  import_playbook: shoplauncher-lb.yml

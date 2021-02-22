@@ -1,10 +1,14 @@
 ---
 # tasks file for apache
+- name: Ensure EPEL is installed
+  dnf:
+    name: epel-release.noarch
+    state: present
+
 - name: installing tools to manage webservers
   dnf:
-    name: "{{ item }}"
+    name: "{{ tools }}"
     state: present
-  with_items: "{{ tools }}"
 
 - name: installing apache
   dnf:
@@ -39,10 +43,4 @@
   loop:
     "{{ srvs }}"
   tags: openport
-
-
-  #- name: copying content
-  #template:
-  #  src: templates/master.j2
-  #  dest: /var/www/html/index.html
 

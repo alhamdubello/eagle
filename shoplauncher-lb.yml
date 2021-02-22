@@ -1,96 +1,98 @@
 ---
-- name: Set up stockchecker loadbalancer networking
+- name: Set up shoplauncherer loadbalancer networking
   hosts: localhost
   gather_facts: False
   vars_files:
     - gce_vars/auth
     - gce_vars/zone
   tasks:
-
-  - name: create a global address for stockchecker
-    gcp_compute_global_address:
-        name: "sc-globaladdress-globalforwardingrule1"
+    - name: create a global address for shoplauncherer
+      gcp_compute_global_address:
+        name: "sl-globaladdress-globalforwardingrule1"
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
         service_account_file: "{{ gcp_cred_file }}"
-    register: sc_globaladdress
+      register: sl_globaladdress
 
-  - name: create a stockcheckapp instance group
-    gcp_compute_instance_group:
-        name: "instancegroup-globalforwardingrule"
+    - name: create a shoplauncherapp instance group
+      gcp_compute_instance_group:
+        name: "sl-instancegroup-globalforwardingrule"
         zone: "{{ zone.za }}"
         instances:
-          - "{{ stockcheckappinstance1 }}"
-          - "{{ stockcheckappinstance2 }}"
+          - "{{ shoplauncherappinstance1 }}"
+          - "{{ shoplauncherappinstance2 }}"
+          - "{{ shoplauncherappinstance2 }}"
         named_ports:
-        - name: http
-          port: 80
+          - name: http
+            port: 80
         network: "{{ network }}"
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
         service_account_file: "{{ gcp_cred_file }}"
         state: present
-    register: stockcheckapp_ig
+      register: shoplauncherapp_ig
 
-  - name: create a http health check
-    gcp_compute_http_health_check:
-        name: "httphealthcheck-stockcheck"
-        healthy_threshold: 10
+    - name: create a http health check
+      gcp_compute_http_health_check:
+        name: "httphealthcheck-shoplauncher"
         port: 80
+        healthy_threshold: 10
         timeout_sec: 2
         unhealthy_threshold: 5
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
         service_account_file: "{{ gcp_cred_file }}"
         state: present
-    register: stockcheckapp_hc
-
-  - name: create a backend stockchecker app service
-    gcp_compute_backend_service:
-        name: "stockcheck-bes-globalforwardingrule"
+      register: shoplauncherapp_hc
+  
+    - name: create a backend shoplauncherer app service
+      gcp_compute_backend_service:
+        name: "shoplauncher-bes-globalforwardingrule"
         backends:
-        - group: "{{ stockcheckapp_ig.selfLink }}"
+        - group: "{{ shoplauncherapp_ig.selfLink }}"
         health_checks:
-        - "{{ stockcheckapp_hc.selfLink }}"
+        - "{{ shoplauncherapp_hc.selfLink }}"
         enable_cdn: 'true'
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
         service_account_file: "{{ gcp_cred_file }}"
         state: present
-    register: stockcheckapp_bes
-    ignore_errors: yes
+      register: shoplauncherapp_bes
+      ignore_errors: yes
 
-  - name: create a url map
-    gcp_compute_url_map:
-        name: "sc-urlmap-globalforwardingrule"
-        default_service: "{{ stockcheckapp_bes }}"
+    - name: create a url map
+      gcp_compute_url_map:
+        name: "sl-urlmap-globalforwardingrule"
+        default_service: "{{ shoplauncherapp_bes }}"
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
         service_account_file: "{{ gcp_cred_file }}"
-    register: scurlmap
+        state: present
+      register: slurlmap
 
-  - name: create a target http proxy
-    gcp_compute_target_http_proxy:
-        name: "sc-httpproxy-globalforwardingrule"
-        url_map: "{{ scurlmap }}"
+    - name: create a target http proxy
+      gcp_compute_target_http_proxy:
+        name: "sl-httpproxy-globalforwardingrule"
+        url_map: "{{ slurlmap }}"
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
         service_account_file: "{{ gcp_cred_file }}"
-    register: sc_httpproxy
+        state: present
+      register: sl_httpproxy
 
-  - name: create a global forwarding rule
-    gcp_compute_global_forwarding_rule:
-        name: "sc-globalfowardingrule"
-        ip_address: "{{ sc_globaladdress.address }}"
+    - name: create a global forwarding rule
+      gcp_compute_global_forwarding_rule:
+        name: "sl-globalfowardingrule"
+        ip_address: "{{ sl_globaladdress.address }}"
         load_balancing_scheme: "EXTERNAL"
         ip_protocol: TCP
         port_range: 80-80
-        target: "{{ sc_httpproxy.selfLink }}"
+        target: "{{ sl_httpproxy.selfLink }}"
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
         service_account_file: "{{ gcp_cred_file }}"
-    register: scforwardingrule
+      register: slforwardingrule
 
   post_tasks:
     - debug:
-        msg: "Load balancer IP: {{ scforwardingrule['IPAddress'] }}"
+        msg: "Load balancer IP: {{ slforwardingrule['IPAddress'] }}"

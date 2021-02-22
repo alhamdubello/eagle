@@ -75,6 +75,7 @@
           - management
           - greeneagle
           - redis
+          - shoplauncher
           - stockcheck
         project: "{{ gcp_project }}"
         auth_kind: "{{ gcp_cred_kind }}"
