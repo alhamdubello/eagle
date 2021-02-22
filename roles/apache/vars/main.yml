@@ -4,6 +4,7 @@ tools:
   - htop
   - monit
   - iotop 
+  - rsync
 srvs:
   - 22/tcp
   - 80/tcp

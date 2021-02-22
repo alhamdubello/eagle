@@ -158,3 +158,10 @@
   vars:
     ansible_user: belloau
     ansible_ssh_private_key_file: ~/.ssh/id_rsa.pub
+  tasks:
+    - name: ensuring webroot directory
+      file:
+        path: /var/www/html/frontend/web
+        state: directory
+        mode: '0755'
+

@@ -163,11 +163,6 @@
         state: started
         enabled: yes
 
-    - name: sample php files
-      template:
-        src: templates/index.php.j2
-        dest: /var/www/html/frontend/web/index.php
-
   handlers:
     - name: restart apache
       systemd:
