@@ -73,6 +73,7 @@
           - elasticsearch
         source_tags:
           - management
+          - elasticsearch
           - greeneagle
           - redis
           - shoplauncher
