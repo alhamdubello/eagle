@@ -1,0 +1,76 @@
+---
+# tasks file for mariadb
+- name: Install MariaDB packages
+  dnf:
+    name:
+      - mariadb-server
+      - mariadb
+      - python3-PyMySQL.noarch
+    state: present
+
+- name: Start the MariaDB Services
+  systemd:
+    name: mariadb
+    state: started
+    enabled: yes
+
+- name: update mysql root password for all root accounts
+  mysql_user:
+    name: root
+    host: localhost
+    password: "{{ root_db_password }}"
+
+- name: copy .my.cnf file with root password credentials
+  template:
+    src: templates/root/.my.cnf
+    dest: /root/.my.cnf
+    owner: root
+    mode: '0600'
+  tags: cnf
+
+- name: update mysql root password login for all root accounts
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    password: "{{ root_db_password }}"
+  with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+  tags: rootpassword
+
+- name: ensure anonymous users are not in the database
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+
+- name: remove the test database
+  mysql_db:
+    name: test
+    state: absent
+
+    #- name: add icinga2db
+    #  mysql_db:
+    #    name: icinga
+    #    state: present
+    #  notify: import icinga schema
+    #
+    #- name: add icinga db user
+    #  mysql_user:
+    #    name: icinga
+    #    password: 12345
+    #    priv: 'icinga.*:ALL'
+    #    state: present
+    #
+    #- name: Icinga2web db creation
+    #  mysql_db:
+    #    name: icinga2webdb
+    #    state: present
+    #
+    #- name: add icinga2web db user
+    #  mysql_user:
+    #    name: icingaweb
+    #    password: 12345
+    #    priv: 'icinga2webdb.*:ALL'
+    #    state: present
